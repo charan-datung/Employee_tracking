@@ -45,19 +45,44 @@
          @capacitor/camera is banned in this codebase. -->
     <uses-permission android:name="android.permission.CAMERA" />
 
-    <!-- Merged automatically from plugin manifests (do not redeclare):
-         @capacitor-community/background-geolocation:
-           ACCESS_COARSE_LOCATION, ACCESS_FINE_LOCATION, FOREGROUND_SERVICE,
-           FOREGROUND_SERVICE_LOCATION, POST_NOTIFICATIONS
-           (COARSE is an OS requirement on Android 12+ when requesting FINE;
-            capture-time code must still reject non-GPS fixes, CLAUDE.md rule 5)
+    <!-- Location tracking (services/location). Declared explicitly for
+         auditability even though the background-geolocation plugin's manifest
+         also merges them — duplicates are collapsed by the manifest merger.
+
+         ACCESS_COARSE_LOCATION is an OS requirement on Android 12+ when
+         requesting FINE (the permission dialog needs both declared). It does
+         NOT mean coarse fixes are accepted: capture-time code rejects
+         simulated and >100m-accuracy readings (CLAUDE.md rule 5). -->
+    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
+    <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
+
+    <!-- The interval-tracking watcher runs as a foreground service while an
+         attendance session is open. FOREGROUND_SERVICE_LOCATION is REQUIRED
+         from Android 14 (API 34) for any service with
+         foregroundServiceType="location"; the <service> declaration itself
+         (com.equimaps.capacitor_background_geolocation.BackgroundGeolocationService,
+         android:foregroundServiceType="location") is merged from the
+         plugin's own manifest — do not redeclare it here. -->
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_LOCATION" />
+
+    <!-- ACCESS_BACKGROUND_LOCATION is deliberately ABSENT. The foreground-
+         service pattern does not need it: while the service (and its visible
+         notification) is running, while-in-use location keeps flowing with
+         the screen off. Background permission would only be needed to sample
+         location WITHOUT a foreground service — which this app must never do
+         (CLAUDE.md rule 4, RA 10173 proportionality). Requesting it would
+         also trigger Google Play's prominent-disclosure / background-location
+         review for zero benefit. Do not add it. -->
+
+    <!-- Merged automatically from other plugin manifests (do not redeclare):
+         background-geolocation additionally: POST_NOTIFICATIONS
          @capacitor/network: ACCESS_NETWORK_STATE
          @capacitor/local-notifications:
-           RECEIVE_BOOT_COMPLETED, WAKE_LOCK, POST_NOTIFICATIONS
+           RECEIVE_BOOT_COMPLETED, WAKE_LOCK, POST_NOTIFICATIONS -->
 
-         ACCESS_BACKGROUND_LOCATION is deliberately ABSENT. Location during an
-         open attendance session runs inside the plugin's foreground service
-         (foregroundServiceType="location"), which only needs while-in-use
-         permission. There is no tracking outside an open session
-         (CLAUDE.md rule 4, RA 10173 proportionality). -->
+    <!-- GPS integrity is mandatory (CLAUDE.md rule 5): never fall back to
+         coarse/network location, so devices without GPS hardware must not
+         install this app at all — required="true" makes Play filter them. -->
+    <uses-feature android:name="android.hardware.location.gps" android:required="true" />
 </manifest>
