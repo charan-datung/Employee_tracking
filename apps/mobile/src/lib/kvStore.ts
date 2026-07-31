@@ -1,31 +1,34 @@
-import { Preferences } from '@capacitor/preferences';
+import { SecureStorage } from '@aparajita/capacitor-secure-storage';
 
 // Key-value storage boundary. Everything that persists auth state goes
 // through this interface so the backing store can be swapped in ONE place.
 //
-// CURRENT BACKING: @capacitor/preferences = plain Android SharedPreferences,
-// UNENCRYPTED. This is the sanctioned fallback while the encrypted-storage
-// plugin decision is pending (see SECURITY.md "Session storage" for the
-// residual risk and the swap plan). Do not add a second storage path.
+// BACKING: @aparajita/capacitor-secure-storage — values are encrypted at
+// rest with a key held in the Android Keystore, so the Supabase refresh
+// token never sits in plain SharedPreferences (see SECURITY.md "Session
+// storage"). No manifest permissions required. Do not add a second storage
+// path, and do not move auth state to @capacitor/preferences.
 export interface KVStore {
   get(key: string): Promise<string | null>;
   set(key: string, value: string): Promise<void>;
   remove(key: string): Promise<void>;
 }
 
-class PreferencesKVStore implements KVStore {
+class SecureKVStore implements KVStore {
   async get(key: string): Promise<string | null> {
-    const { value } = await Preferences.get({ key });
-    return value;
+    const value = await SecureStorage.get(key);
+    // We only ever store strings; anything else is corruption — treat as
+    // absent so callers re-authenticate rather than crash.
+    return typeof value === 'string' ? value : null;
   }
 
   async set(key: string, value: string): Promise<void> {
-    await Preferences.set({ key, value });
+    await SecureStorage.set(key, value);
   }
 
   async remove(key: string): Promise<void> {
-    await Preferences.remove({ key });
+    await SecureStorage.remove(key);
   }
 }
 
-export const kvStore: KVStore = new PreferencesKVStore();
+export const kvStore: KVStore = new SecureKVStore();
