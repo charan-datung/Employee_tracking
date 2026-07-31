@@ -9,3 +9,5 @@ initialised; run `supabase init` when backend work starts, it will add
   "total_hours", or "duration" strings in the schema.
 - `seed.sql` — local development seed data.
 - `functions/` — Edge Functions (Deno). One directory per function.
+- `tests/` — pgTAP suites (`supabase test db`). `rls_test.sql` proves the RLS
+  matrix; it must pass before any policy change merges.
