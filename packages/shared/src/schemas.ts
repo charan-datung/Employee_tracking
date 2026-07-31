@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { REQUEST_CODE_ALPHABET, REQUEST_CODE_LENGTH } from './constants';
+import { REQUEST_CODE_ALPHABET, REQUEST_CODE_LENGTH } from './constants.ts';
 
 export const agentRoleSchema = z.enum(['sales_agent', 'collector', 'field_supervisor']);
 export type AgentRole = z.infer<typeof agentRoleSchema>;

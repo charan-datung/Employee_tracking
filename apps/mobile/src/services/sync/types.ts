@@ -106,7 +106,15 @@ export interface SyncStatus {
 }
 
 export interface FlagReport {
-  flag_type: 'sync_anomaly' | 'mock_attempt_blocked' | 'permission_revoked';
+  // Self-incriminating observations only — the exact set the RLS policy
+  // flags_insert_self_report admits. Detector verdicts (teleport,
+  // impossible_velocity, …) are the server's to raise and are rejected here
+  // and at the database.
+  flag_type:
+    | 'sync_anomaly'
+    | 'mock_attempt_blocked'
+    | 'permission_revoked'
+    | 'accuracy_degraded';
   severity: 'info' | 'warn' | 'critical';
   session_id: string | null;
   detail: Record<string, unknown>;

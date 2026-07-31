@@ -25,6 +25,26 @@ export const OFFLINE_GRACE_HOURS = 72 as const;
 export const REQUEST_CODE_LENGTH = 6 as const;
 export const REQUEST_CODE_ALPHABET = '23456789ABCDEFGHJKMNPQRSTUVWXYZ' as const;
 
+// A session open longer than this is not a real work day — the agent forgot
+// to check out. The server auto-closes past this mark (hourly pg_cron job,
+// status 'auto_closed', NULL close coordinates). The CLIENT stops interval
+// tracking at the same mark, deliberately a beat earlier than the server's
+// hourly sweep: continuing to sample location for days because someone forgot
+// to tap a button is exactly the disproportionate tracking RA 10173 forbids
+// (CLAUDE.md rule 4).
+export const SESSION_MAX_HOURS = 16 as const;
+
+// Presentation-layer elapsed-time display, behind a flag per CLAUDE.md rule 8.
+// This is a LABEL RENDERED FROM two timestamps at paint time. It is never
+// persisted, never synced, never stored in any column, and carries no
+// labor-law meaning under Article 82 of the Labor Code. Turning it off must
+// never change what is recorded — only what is shown. Ask before changing.
+export const FEATURE_ELAPSED_TIME_DISPLAY = true as const;
+
+// Repeated failures to obtain any usable fix stop being bad luck and start
+// being a signal (dead GPS chip, permanently indoors, deliberate jamming).
+export const INSUFFICIENT_SAMPLES_FLAG_THRESHOLD = 3 as const;
+
 // Supabase Storage bucket for check-in/check-out/visit photos. Objects are
 // keyed <agent_id>/<photo_uuid>.jpg; uploads are TUS-resumable.
 export const STORAGE_BUCKET_PHOTOS = 'field-photos' as const;

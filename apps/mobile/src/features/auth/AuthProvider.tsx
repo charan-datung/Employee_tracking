@@ -21,6 +21,7 @@ import { kvStore } from '../../lib/kvStore';
 import { readDeviceIdentity } from '../../lib/deviceIdentity';
 import { isWithinOfflineGrace } from './offlineGrace';
 import { startSyncEngine } from '../../services/sync/index.ts';
+import { stopIntervalTracking } from '../../services/location/index.ts';
 import {
   fetchOwnAgent,
   hasCurrentConsent,
@@ -295,6 +296,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   );
 
   const logout = useCallback(async () => {
+    // Stop sampling before anything else: a logged-out agent is not on an
+    // observable shift, whatever the local session record says (CLAUDE.md
+    // rule 4). The open-session record itself is deliberately KEPT — if the
+    // same agent logs back in mid-day, tracking re-arms and their check-in
+    // still stands.
+    await stopIntervalTracking().catch(() => undefined);
     // scope 'local' + catch: logging out must work offline too.
     await supabase.auth.signOut({ scope: 'local' }).catch(() => undefined);
     await toSignedOut();

@@ -4,5 +4,5 @@
 export const APP_ID = 'com.datung.fieldapp' as const;
 export const APP_NAME = 'Datung Field' as const;
 
-export * from './constants';
-export * from './schemas';
+export * from './constants.ts';
+export * from './schemas.ts';

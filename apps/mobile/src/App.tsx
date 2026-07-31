@@ -3,16 +3,18 @@ import { Outlet, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth, type AuthPhase } from './features/auth/AuthProvider';
 import { useSyncStatus } from './services/sync/index.ts';
 
-// Each auth phase has exactly one home route; the shell keeps the URL and the
-// phase in lock-step so no gate screen can be escaped by navigation. The
-// gates (device block, consent, offline lock) have no other exit paths.
-const phaseRoute: Record<Exclude<AuthPhase, 'booting'>, string> = {
+// Gate routes are owned by the auth phase machine: while any of them is the
+// active phase, the app is pinned there and no navigation escapes. Once the
+// phase is 'ready' the app's own routes (home, check-in, check-out, visit)
+// are free — but landing on a gate route from 'ready' bounces home.
+const GATE_ROUTES: Record<Exclude<AuthPhase, 'booting' | 'ready'>, string> = {
   signed_out: '/login',
   device_blocked: '/device-blocked',
   consent_required: '/consent',
   offline_locked: '/locked',
-  ready: '/',
 };
+
+const GATE_PATHS = Object.values(GATE_ROUTES);
 
 function Splash() {
   return (
@@ -55,10 +57,14 @@ export function App() {
 
   useEffect(() => {
     if (phase === 'booting') return;
-    const target = phaseRoute[phase];
-    if (location.pathname !== target) {
-      navigate(target, { replace: true });
+    if (phase === 'ready') {
+      if (GATE_PATHS.includes(location.pathname)) {
+        navigate('/', { replace: true });
+      }
+      return;
     }
+    const target = GATE_ROUTES[phase];
+    if (location.pathname !== target) navigate(target, { replace: true });
   }, [phase, location.pathname, navigate]);
 
   if (phase === 'booting') return <Splash />;

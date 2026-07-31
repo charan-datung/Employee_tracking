@@ -22,6 +22,14 @@ export const batteryPort: BatteryPort = {
   getBatteryInfo: () => Device.getBatteryInfo(),
 };
 
+// Opens this app's system settings page. The only settings deep link we can
+// reach without adding a plugin: OEM battery screens live behind proprietary
+// activities that are not safely launchable, so the per-OEM guides
+// (features/attendance/oemBattery.ts) spell out the path from here.
+export function openAppSettings(): Promise<void> {
+  return BackgroundGeolocation.openSettings();
+}
+
 // Device uptime stand-in. The schema wants SystemClock.elapsedRealtime() for
 // uptime_regression detection, but no installed plugin exposes it.
 // performance.now() is the WebView process's monotonic clock: it survives
