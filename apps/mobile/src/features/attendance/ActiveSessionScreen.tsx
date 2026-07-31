@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { SyncStatusPill } from '../../services/sync/index.ts';
 import { useAttendance } from './AttendanceProvider.tsx';
 import { elapsedLabelSince } from './elapsed.ts';
+import { OpenVisitCard } from '../visits/OpenVisitCard.tsx';
 
 const OUTCOME_LABELS: Record<string, string> = {
   contacted_paid: 'Nagbayad',
@@ -18,7 +19,7 @@ const OUTCOME_LABELS: Record<string, string> = {
 
 // Home when a session is open.
 export function ActiveSessionScreen() {
-  const { session, visits, permissionRevoked, canLogVisit, banner, dismissBanner, recheckPermission } =
+  const { session, visits, permissionRevoked, canLogVisit, banner, dismissBanner, recheckPermission, refresh } =
     useAttendance();
   const navigate = useNavigate();
   const [confirmingCheckOut, setConfirmingCheckOut] = useState(false);
@@ -85,6 +86,10 @@ export function ActiveSessionScreen() {
             Naibalik ko na — i-check ulit
           </button>
         </div>
+      )}
+
+      {session !== null && (
+        <OpenVisitCard sessionId={session.id} onDeparted={() => void refresh()} />
       )}
 
       <section className="mt-6 rounded-2xl bg-white p-5">

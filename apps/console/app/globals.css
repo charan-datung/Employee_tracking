@@ -1,1 +1,4 @@
 @import 'tailwindcss';
+/* MapLibre's own stylesheet — required for controls, popups and marker
+   positioning to render correctly. */
+@import 'maplibre-gl/dist/maplibre-gl.css';

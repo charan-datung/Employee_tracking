@@ -209,6 +209,39 @@ export function createSyncApi(deps: {
     });
   }
 
+  // "AALIS NA AKO". A PATCH of the already-inserted visit, write-once at the
+  // database (policy visits_update_departure_own). departure_was_inferred and
+  // dwell_seconds_server are server-owned and deliberately absent here.
+  async function enqueueVisitDeparture(input: {
+    visitId: string;
+    sessionId: string;
+    departedAtDeviceMs: number;
+    lat: number;
+    lng: number;
+  }): Promise<void> {
+    await deps.enqueue({
+      entityType: 'visit_departure',
+      entityLocalId: input.visitId,
+      sessionId: input.sessionId,
+      dependsPhotoId: null,
+      createdAtDevice: deps.now(),
+      payload: {
+        id: input.visitId,
+        departed_at_device: iso(input.departedAtDeviceMs),
+        depart_lat: input.lat,
+        depart_lng: input.lng,
+      },
+      mirrorStatements: [
+        {
+          statement: `update visits_local
+            set departed_at_device = ?, depart_lat = ?, depart_lng = ?
+            where id = ? and departed_at_device is null`,
+          values: [input.departedAtDeviceMs, input.lat, input.lng, input.visitId],
+        },
+      ],
+    });
+  }
+
   async function enqueuePing(ping: LocalPing): Promise<void> {
     await deps.enqueue({
       entityType: 'ping',
@@ -266,7 +299,13 @@ export function createSyncApi(deps: {
     });
   }
 
-  return { enqueueSessionOpen, enqueueSessionClose, enqueueVisit, enqueuePing };
+  return {
+    enqueueSessionOpen,
+    enqueueSessionClose,
+    enqueueVisit,
+    enqueueVisitDeparture,
+    enqueuePing,
+  };
 }
 
 // The photo's own outbox row rides in the same transaction as its parent's

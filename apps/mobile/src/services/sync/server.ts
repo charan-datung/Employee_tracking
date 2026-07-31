@@ -42,14 +42,16 @@ async function push(
 
   try {
     let res: Response;
-    if (entityType === 'session_close') {
+    if (entityType === 'session_close' || entityType === 'visit_departure') {
+      const table =
+        entityType === 'session_close' ? 'attendance_sessions' : 'visits';
       // Close is an UPDATE of the agent's own open session (RLS policy
       // sessions_update_close_own). One row per call.
       const payload = payloads[0];
       if (payload === undefined) return { kind: 'ok' };
       const { id, ...fields } = payload;
       res = await fetch(
-        `${env.VITE_SUPABASE_URL}/rest/v1/attendance_sessions?id=eq.${String(id)}`,
+        `${env.VITE_SUPABASE_URL}/rest/v1/${table}?id=eq.${String(id)}`,
         {
           method: 'PATCH',
           headers: { ...headers, Prefer: 'return=minimal' },

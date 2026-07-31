@@ -4,6 +4,7 @@ import {
   SQLiteConnection,
   type SQLiteDBConnection,
 } from '@capacitor-community/sqlite';
+import { CLIENTS_SCHEMA_SQL } from '../../features/clients/sql.ts';
 
 // SQLite connection lifecycle. The @capacitor-community/sqlite plugin makes
 // it easy to leak connections; the rules encoded here:
@@ -75,7 +76,7 @@ function getDb(): Promise<SQLiteDBConnection> {
 // outbox and bookkeeping. Versioned via PRAGMA user_version.
 // ---------------------------------------------------------------------------
 
-const SCHEMA_VERSION = 1;
+const SCHEMA_VERSION = 2;
 
 const SCHEMA_V1 = `
 create table if not exists attendance_sessions_local (
@@ -182,6 +183,12 @@ async function migrate(db: SQLiteDBConnection): Promise<void> {
   const version = row?.user_version ?? 0;
   if (version < 1) {
     await db.execute(SCHEMA_V1, true);
+  }
+  if (version < 2) {
+    // v2: the offline client book (clients_local + clients_fts).
+    await db.execute(CLIENTS_SCHEMA_SQL, true);
+  }
+  if (version < SCHEMA_VERSION) {
     await db.execute(`PRAGMA user_version = ${SCHEMA_VERSION};`, false);
     if (isWeb) await sqlite.saveToStore(DB_NAME);
   }

@@ -12,7 +12,8 @@ import { OfflineLockedPage } from './pages/OfflineLockedPage';
 import { HomePage } from './pages/HomePage';
 import CheckInPage from './pages/CheckInPage';
 import CheckOutPage from './pages/CheckOutPage';
-import VisitPage from './pages/VisitPage';
+import { ClientListScreen } from './features/clients/ClientListScreen.tsx';
+import { VisitCaptureFlow } from './features/visits/VisitCaptureFlow.tsx';
 import './index.css';
 
 const queryClient = new QueryClient();
@@ -24,7 +25,8 @@ const router = createBrowserRouter([
       { path: '/', element: <HomePage /> },
       { path: '/check-in', element: <CheckInPage /> },
       { path: '/check-out', element: <CheckOutPage /> },
-      { path: '/visit', element: <VisitPage /> },
+      { path: '/visit', element: <ClientListScreen /> },
+      { path: '/visit/:clientId', element: <VisitCaptureFlow /> },
       { path: '/login', element: <LoginPage /> },
       { path: '/consent', element: <ConsentPage /> },
       { path: '/device-blocked', element: <DeviceBlockedPage /> },

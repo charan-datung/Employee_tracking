@@ -32,6 +32,14 @@ const STAMP_OFFSET: ReadonlySet<EntityType> = new Set([
   'ping',
 ]);
 
+// Statements the server applies one row at a time (PATCH by id, or a binary
+// upload) rather than as an array insert.
+const SINGLE_ROW_TYPES: ReadonlySet<EntityType> = new Set([
+  'session_close',
+  'visit_departure',
+  'photo',
+]);
+
 const META_LAST_SYNCED_AT = 'last_synced_at';
 
 export interface SyncWorker {
@@ -101,6 +109,9 @@ export function createSyncWorker(deps: SyncWorkerDeps): SyncWorker {
           !(await deps.outbox.hasUnresolved('session_open', row.session_id)) &&
           !(await photoBlocked())
         );
+      case 'visit_departure':
+        // The visit row must exist on the server before it can be patched.
+        return !(await deps.outbox.hasUnresolved('visit', row.entity_local_id));
       case 'session_close':
         return (
           row.session_id !== null &&
@@ -108,6 +119,7 @@ export function createSyncWorker(deps: SyncWorkerDeps): SyncWorker {
           !(await deps.outbox.hasPendingForSession(row.session_id, [
             'ping',
             'visit',
+            'visit_departure',
           ])) &&
           !(await photoBlocked())
         );
@@ -121,8 +133,7 @@ export function createSyncWorker(deps: SyncWorkerDeps): SyncWorker {
     const chunks: OutboxRow[][] = [];
     let current: OutboxRow[] = [];
     for (const row of rows) {
-      const single =
-        row.entity_type === 'session_close' || row.entity_type === 'photo';
+      const single = SINGLE_ROW_TYPES.has(row.entity_type);
       const head = current[0];
       if (
         head === undefined ||

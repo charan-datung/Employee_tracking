@@ -5,6 +5,7 @@ import { createLocationService } from './service.ts';
 import { getOpenSessionLocal } from './openSession.ts';
 import { batteryPort, geolocationPort, sleep, uptimeMs } from './plugins.ts';
 import { reportIntegrityFlag, syncApi } from '../sync/index.ts';
+import { setLastPosition } from '../../features/clients/lastPosition.ts';
 
 export type {
   CaptureOptions,
@@ -39,7 +40,12 @@ export const locationService = createLocationService({
   getOpenSession: getOpenSessionLocal,
   // Pings go straight into the SQLite outbox (mirror row + outbox row in one
   // transaction); the sync worker drains them per its throttles and ordering.
-  persistPing: (ping) => syncApi.enqueuePing(ping),
+  persistPing: async (ping) => {
+    await syncApi.enqueuePing(ping);
+    // Feeds client-list ordering and the offline visit gate. Only ever
+    // written from inside an open session (rule 4).
+    await setLastPosition(ping.lat, ping.lng, ping.captured_at_device);
+  },
   now: () => Date.now(),
   uptimeMs,
   sleep,

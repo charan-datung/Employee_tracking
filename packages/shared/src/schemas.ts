@@ -72,6 +72,33 @@ export const approveDeviceRebindResponseSchema = z.discriminatedUnion('status', 
 export type ApproveDeviceRebindResponse = z.infer<typeof approveDeviceRebindResponseSchema>;
 
 // ---------------------------------------------------------------------------
+// Client book (RLS already restricts the rows to the caller's assignments)
+// ---------------------------------------------------------------------------
+
+export const geocodeConfidenceSchema = z.enum([
+  'exact',
+  'approximate',
+  'unverified',
+]);
+export type GeocodeConfidence = z.infer<typeof geocodeConfidenceSchema>;
+
+export const clientRowSchema = z.object({
+  id: z.uuid(),
+  external_ref: z.string().nullable(),
+  display_name: z.string().min(1),
+  account_type: z.enum(['coco_martin_group', 'trust_loan_sme']),
+  address_text: z.string().nullable(),
+  barangay: z.string().nullable(),
+  city: z.string().nullable(),
+  lat: z.number().nullable(),
+  lng: z.number().nullable(),
+  geofence_radius_m: z.number().int().positive(),
+  geocode_confidence: geocodeConfidenceSchema,
+  is_active: z.boolean(),
+});
+export type ClientRow = z.infer<typeof clientRowSchema>;
+
+// ---------------------------------------------------------------------------
 // Consent
 // ---------------------------------------------------------------------------
 

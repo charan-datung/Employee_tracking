@@ -22,6 +22,7 @@ import { readDeviceIdentity } from '../../lib/deviceIdentity';
 import { isWithinOfflineGrace } from './offlineGrace';
 import { startSyncEngine } from '../../services/sync/index.ts';
 import { stopIntervalTracking } from '../../services/location/index.ts';
+import { syncClientsIfStale } from '../clients/sync.ts';
 import {
   fetchOwnAgent,
   hasCurrentConsent,
@@ -250,7 +251,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   // The sync engine runs whenever the app is usable; starting it again after
   // a re-login just kicks a drain (startSyncEngine is idempotent).
   useEffect(() => {
-    if (state.phase === 'ready') void startSyncEngine();
+    if (state.phase === 'ready') {
+      void startSyncEngine();
+      // Client book: pulled on login, refreshed once a day. Never throws —
+      // an agent with no signal keeps yesterday's book.
+      void syncClientsIfStale();
+    }
   }, [state.phase]);
 
   // Every successful online token refresh renews the 72h offline allowance.

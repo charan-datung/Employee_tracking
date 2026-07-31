@@ -7,6 +7,9 @@ export type EntityType =
   | 'session_open'
   | 'session_close'
   | 'visit'
+  // Departure is a PATCH of an already-inserted visit ("AALIS NA AKO"), so it
+  // is its own outbox row that waits for the visit to land first.
+  | 'visit_departure'
   | 'ping'
   | 'photo'
   | 'flag';

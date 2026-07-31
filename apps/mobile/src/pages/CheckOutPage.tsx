@@ -6,6 +6,7 @@ import {
   type VerifiedFix,
 } from '../services/location/index.ts';
 import { syncApi, type SavedPhoto } from '../services/sync/index.ts';
+import { clearLastPosition } from '../features/clients/lastPosition.ts';
 import { useAuth } from '../features/auth/AuthProvider';
 import { useAttendance } from '../features/attendance/AttendanceProvider.tsx';
 import { AttendanceCaptureFlow } from '../features/attendance/AttendanceCaptureFlow.tsx';
@@ -29,6 +30,9 @@ export default function CheckOutPage() {
       // fix, there is no lawful basis to keep collecting location.
       await stopIntervalTracking();
       await clearOpenSessionLocal();
+      // The cached position only exists to serve an open session; a checked-out
+      // agent leaves no position behind (CLAUDE.md rule 4).
+      await clearLastPosition();
 
       await syncApi.enqueueSessionClose({
         sessionId,
