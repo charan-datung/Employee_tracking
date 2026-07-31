@@ -3,8 +3,8 @@
 import { createProbePermissionCheck } from './permission.ts';
 import { createLocationService } from './service.ts';
 import { getOpenSessionLocal } from './openSession.ts';
-import { persistPingToBuffer } from './pingBuffer.ts';
 import { batteryPort, geolocationPort, sleep, uptimeMs } from './plugins.ts';
+import { syncApi } from '../sync/index.ts';
 
 export type {
   CaptureOptions,
@@ -25,14 +25,15 @@ export {
   getOpenSessionLocal,
   setOpenSessionLocal,
 } from './openSession.ts';
-export { drainPingBuffer, peekPingBuffer } from './pingBuffer.ts';
 
 export const locationService = createLocationService({
   geolocation: geolocationPort,
   battery: batteryPort,
   checkPermission: createProbePermissionCheck(geolocationPort, sleep),
   getOpenSession: getOpenSessionLocal,
-  persistPing: persistPingToBuffer,
+  // Pings go straight into the SQLite outbox (mirror row + outbox row in one
+  // transaction); the sync worker drains them per its throttles and ordering.
+  persistPing: (ping) => syncApi.enqueuePing(ping),
   now: () => Date.now(),
   uptimeMs,
   sleep,

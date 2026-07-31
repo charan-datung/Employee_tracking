@@ -20,6 +20,7 @@ import { supabase } from '../../lib/supabaseClient';
 import { kvStore } from '../../lib/kvStore';
 import { readDeviceIdentity } from '../../lib/deviceIdentity';
 import { isWithinOfflineGrace } from './offlineGrace';
+import { startSyncEngine } from '../../services/sync/index.ts';
 import {
   fetchOwnAgent,
   hasCurrentConsent,
@@ -244,6 +245,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     bootedRef.current = true;
     void bootstrap();
   }, [bootstrap]);
+
+  // The sync engine runs whenever the app is usable; starting it again after
+  // a re-login just kicks a drain (startSyncEngine is idempotent).
+  useEffect(() => {
+    if (state.phase === 'ready') void startSyncEngine();
+  }, [state.phase]);
 
   // Every successful online token refresh renews the 72h offline allowance.
   useEffect(() => {

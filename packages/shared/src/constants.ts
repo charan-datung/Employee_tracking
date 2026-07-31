@@ -25,6 +25,10 @@ export const OFFLINE_GRACE_HOURS = 72 as const;
 export const REQUEST_CODE_LENGTH = 6 as const;
 export const REQUEST_CODE_ALPHABET = '23456789ABCDEFGHJKMNPQRSTUVWXYZ' as const;
 
+// Supabase Storage bucket for check-in/check-out/visit photos. Objects are
+// keyed <agent_id>/<photo_uuid>.jpg; uploads are TUS-resumable.
+export const STORAGE_BUCKET_PHOTOS = 'field-photos' as const;
+
 // Retention periods surfaced in the privacy notice. TODO: confirm both with
 // the Data Protection Officer before production release — the notice text
 // quotes these numbers.

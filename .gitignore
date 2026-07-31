@@ -38,3 +38,6 @@ coverage/
 .idea/
 .vscode/*
 !.vscode/extensions.json
+
+# jeep-sqlite wasm for browser dev only (copied by copy:sqlwasm; native builds use real SQLite)
+apps/mobile/public/assets/sql-wasm.wasm

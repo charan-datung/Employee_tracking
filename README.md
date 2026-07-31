@@ -107,12 +107,22 @@ After adding any Capacitor plugin (ask first — CLAUDE.md rule 10), run
 `npx cap sync` and update `AndroidManifest.xml`, stating explicitly which
 manifest changes are needed (rule 11).
 
+## Browser development (no device)
+
+`npm run dev` in `apps/mobile` works in a plain browser: the SQLite plugin
+falls back to the jeep-sqlite web component (sql.js wasm). The dev script
+copies `sql-wasm.wasm` into `public/assets/` automatically (git-ignored —
+native builds use real SQLite and never load it). GPS `simulated` detection
+and the foreground service only exist on a real device; browser dev is for
+UI and sync-logic work.
+
 ## Other commands
 
 ```sh
 npm run build:console          # build the Next.js console
 npm run dev --workspace apps/console   # console dev server
 npm run typecheck              # typecheck every workspace
+npm test --workspace apps/mobile       # location + sync service tests
 ```
 
 ## Environment variables

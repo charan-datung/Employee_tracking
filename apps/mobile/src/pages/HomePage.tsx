@@ -1,4 +1,5 @@
 import { useAuth } from '../features/auth/AuthProvider';
+import { SyncStatusPill } from '../services/sync/index.ts';
 
 const roleLabel: Record<string, string> = {
   sales_agent: 'Sales Agent',
@@ -25,11 +26,14 @@ export function HomePage() {
             {agent.employee_no} · {roleLabel[agent.role] ?? agent.role}
           </p>
         </div>
-        {isOffline && (
-          <span className="rounded-full bg-amber-100 px-3 py-1 text-xs font-semibold text-amber-800">
-            Offline
-          </span>
-        )}
+        <div className="flex flex-col items-end gap-1.5">
+          <SyncStatusPill />
+          {isOffline && (
+            <span className="rounded-full bg-amber-100 px-3 py-1 text-xs font-semibold text-amber-800">
+              Offline
+            </span>
+          )}
+        </div>
       </header>
 
       <div className="mt-8 flex-1">
