@@ -1,0 +1,63 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <application
+        android:allowBackup="true"
+        android:icon="@mipmap/ic_launcher"
+        android:label="@string/app_name"
+        android:roundIcon="@mipmap/ic_launcher_round"
+        android:supportsRtl="true"
+        android:theme="@style/AppTheme">
+
+        <activity
+            android:configChanges="orientation|keyboardHidden|keyboard|screenSize|locale|smallestScreenSize|screenLayout|uiMode|navigation|density"
+            android:name=".MainActivity"
+            android:label="@string/title_activity_main"
+            android:theme="@style/AppTheme.NoActionBarLaunch"
+            android:launchMode="singleTask"
+            android:exported="true">
+
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+
+        </activity>
+
+        <provider
+            android:name="androidx.core.content.FileProvider"
+            android:authorities="${applicationId}.fileprovider"
+            android:exported="false"
+            android:grantUriPermissions="true">
+            <meta-data
+                android:name="android.support.FILE_PROVIDER_PATHS"
+                android:resource="@xml/file_paths"></meta-data>
+        </provider>
+    </application>
+
+    <!-- Permissions -->
+
+    <uses-permission android:name="android.permission.INTERNET" />
+
+    <!-- In-app live camera preview via getUserMedia (CLAUDE.md rule 6).
+         The WebView requires this app-level permission before
+         onPermissionRequest can grant camera access to the page.
+         @capacitor/camera is banned in this codebase. -->
+    <uses-permission android:name="android.permission.CAMERA" />
+
+    <!-- Merged automatically from plugin manifests (do not redeclare):
+         @capacitor-community/background-geolocation:
+           ACCESS_COARSE_LOCATION, ACCESS_FINE_LOCATION, FOREGROUND_SERVICE,
+           FOREGROUND_SERVICE_LOCATION, POST_NOTIFICATIONS
+           (COARSE is an OS requirement on Android 12+ when requesting FINE;
+            capture-time code must still reject non-GPS fixes, CLAUDE.md rule 5)
+         @capacitor/network: ACCESS_NETWORK_STATE
+         @capacitor/local-notifications:
+           RECEIVE_BOOT_COMPLETED, WAKE_LOCK, POST_NOTIFICATIONS
+
+         ACCESS_BACKGROUND_LOCATION is deliberately ABSENT. Location during an
+         open attendance session runs inside the plugin's foreground service
+         (foregroundServiceType="location"), which only needs while-in-use
+         permission. There is no tracking outside an open session
+         (CLAUDE.md rule 4, RA 10173 proportionality). -->
+</manifest>

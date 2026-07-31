@@ -1,0 +1,18 @@
+{
+  "name": "datung-field",
+  "private": true,
+  "version": "0.0.0",
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
+  "scripts": {
+    "build": "npm run build --workspaces --if-present",
+    "build:mobile": "npm run build --workspace apps/mobile",
+    "build:console": "npm run build --workspace apps/console",
+    "typecheck": "npm run typecheck --workspaces --if-present"
+  },
+  "engines": {
+    "node": ">=20.19"
+  }
+}

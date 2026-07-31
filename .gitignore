@@ -1,0 +1,40 @@
+# Dependencies
+node_modules/
+
+# Build output
+dist/
+.next/
+out/
+build/
+
+# Environment — never commit real keys
+.env
+.env.*
+!.env.example
+
+# Capacitor / Android
+apps/mobile/android/app/build/
+apps/mobile/android/build/
+apps/mobile/android/.gradle/
+apps/mobile/android/local.properties
+apps/mobile/android/app/release/
+apps/mobile/android/capacitor-cordova-android-plugins/build/
+*.keystore
+*.jks
+
+# Supabase local dev
+supabase/.temp/
+supabase/.branches/
+
+# Logs and misc
+*.log
+npm-debug.log*
+.DS_Store
+*.tsbuildinfo
+.turbo/
+coverage/
+
+# IDE
+.idea/
+.vscode/*
+!.vscode/extensions.json

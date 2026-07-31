@@ -1,0 +1,2 @@
+-- Local development seed data. Applied by `supabase db reset`.
+-- Skeleton: intentionally empty.
