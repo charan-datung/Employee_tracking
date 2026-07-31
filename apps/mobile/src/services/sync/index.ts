@@ -22,6 +22,7 @@ export { useSyncStatus } from './useSyncStatus.ts';
 export { SyncStatusPill, STALE_PENDING_MINUTES } from './SyncStatusPill.tsx';
 export type { SyncStatus } from './types.ts';
 export type { SavedPhoto } from './photos.ts';
+export { signalsFromFix } from './signals.ts';
 export type {
   SessionCloseInput,
   SessionOpenInput,

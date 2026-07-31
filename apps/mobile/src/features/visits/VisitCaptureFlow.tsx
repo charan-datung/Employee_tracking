@@ -6,6 +6,7 @@ import {
 } from '../../services/location/index.ts';
 import {
   reportIntegrityFlag,
+  signalsFromFix,
   syncApi,
   type SavedPhoto,
 } from '../../services/sync/index.ts';
@@ -137,6 +138,7 @@ export function VisitCaptureFlow() {
         accuracyM: step.fix.accuracy_m,
         isMocked: step.fix.is_mocked,
         deviceUptimeMs: step.fix.device_uptime_ms,
+        signals: signalsFromFix(step.fix),
         outcome,
         outcomeNotes: notes.trim().length > 0 ? notes.trim() : null,
         // Only meaningful when the gate demanded one; the server raises

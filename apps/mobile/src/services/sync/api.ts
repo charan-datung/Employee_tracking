@@ -10,6 +10,17 @@ import type { SavedPhoto } from './photos.ts';
 
 const iso = (ms: number): string => new Date(ms).toISOString();
 
+// The P5 derived integrity signals travel with every capture. They are
+// OBSERVATIONS the server judges (zero_jitter / null_sensor_fields), never
+// verdicts the client reaches — which is why they are sent verbatim and
+// nothing here interprets them.
+export interface CaptureSignals {
+  jitterM: number;
+  accuracyVariance: number;
+  nullSensorCount: number;
+  sampleCount: number;
+}
+
 export interface SessionOpenInput {
   sessionId: string;
   agentId: string;
@@ -21,6 +32,7 @@ export interface SessionOpenInput {
   accuracyM: number;
   isMocked: boolean;
   deviceUptimeMs: number | null;
+  signals: CaptureSignals;
   photo: SavedPhoto;
 }
 
@@ -32,6 +44,7 @@ export interface SessionCloseInput {
   accuracyM: number;
   isMocked: boolean;
   deviceUptimeMs: number | null;
+  signals: CaptureSignals;
   photo: SavedPhoto;
 }
 
@@ -49,6 +62,7 @@ export interface VisitInput {
   outcome: string | null;
   outcomeNotes: string | null;
   geofenceMissReason: string | null;
+  signals: CaptureSignals;
   photo: SavedPhoto | null;
 }
 
@@ -76,6 +90,10 @@ export function createSyncApi(deps: {
         open_photo_path: input.photo.storageObjectPath,
         open_photo_sha256: input.photo.sha256,
         open_device_uptime_ms: input.deviceUptimeMs,
+        open_jitter_m: input.signals.jitterM,
+        open_accuracy_variance: input.signals.accuracyVariance,
+        open_null_sensor_count: input.signals.nullSensorCount,
+        open_sample_count: input.signals.sampleCount,
       },
       mirrorStatements: [
         {
@@ -124,6 +142,10 @@ export function createSyncApi(deps: {
         close_photo_path: input.photo.storageObjectPath,
         close_photo_sha256: input.photo.sha256,
         close_device_uptime_ms: input.deviceUptimeMs,
+        close_jitter_m: input.signals.jitterM,
+        close_accuracy_variance: input.signals.accuracyVariance,
+        close_null_sensor_count: input.signals.nullSensorCount,
+        close_sample_count: input.signals.sampleCount,
       },
       mirrorStatements: [
         {
@@ -168,6 +190,10 @@ export function createSyncApi(deps: {
         arrive_accuracy_m: input.accuracyM,
         arrive_is_mocked: input.isMocked,
         arrive_device_uptime_ms: input.deviceUptimeMs,
+        arrive_jitter_m: input.signals.jitterM,
+        arrive_accuracy_variance: input.signals.accuracyVariance,
+        arrive_null_sensor_count: input.signals.nullSensorCount,
+        arrive_sample_count: input.signals.sampleCount,
         outcome: input.outcome,
         outcome_notes: input.outcomeNotes,
         geofence_miss_reason: input.geofenceMissReason,

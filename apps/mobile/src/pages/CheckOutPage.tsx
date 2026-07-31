@@ -5,7 +5,7 @@ import {
   stopIntervalTracking,
   type VerifiedFix,
 } from '../services/location/index.ts';
-import { syncApi, type SavedPhoto } from '../services/sync/index.ts';
+import { signalsFromFix, syncApi, type SavedPhoto } from '../services/sync/index.ts';
 import { clearLastPosition } from '../features/clients/lastPosition.ts';
 import { useAuth } from '../features/auth/AuthProvider';
 import { useAttendance } from '../features/attendance/AttendanceProvider.tsx';
@@ -42,6 +42,7 @@ export default function CheckOutPage() {
         accuracyM: fix.accuracy_m,
         isMocked: fix.is_mocked,
         deviceUptimeMs: fix.device_uptime_ms,
+        signals: signalsFromFix(fix),
         photo,
       });
 
