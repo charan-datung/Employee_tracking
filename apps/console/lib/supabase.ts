@@ -1,19 +1,28 @@
 import { cookies } from 'next/headers';
+import { redirect } from 'next/navigation';
 import { createServerClient } from '@supabase/ssr';
 import { createClient } from '@supabase/supabase-js';
 import { z } from 'zod';
 
-// Two clients, on purpose:
+// TWO CLIENTS, AND THE DEFAULT MATTERS.
 //
-//   userClient()  — the signed-in console user's session, used to establish
-//                   WHO is asking. Runs as `authenticated`, so RLS applies.
-//   adminClient() — service_role, SERVER-ONLY, used to read the back-office
-//                   queue and to call fix_client_pin (which is granted to
-//                   service_role alone). The key never reaches the browser.
+//   userClient()  — the signed-in supervisor's own session. THIS IS THE
+//                   DEFAULT FOR ALL READS. Requests run as `authenticated`,
+//                   so the *_select_reports RLS policies decide what comes
+//                   back. A supervisor sees their reporting tree because the
+//                   database says so, not because a WHERE clause remembered
+//                   to filter. An agent's token returns their own rows only,
+//                   and no console page renders those.
 //
-// Every privileged action verifies the user through userClient() FIRST and
-// passes their auth id into the RPC, which re-checks the supervisor tree
-// server-side. The service key is a transport detail, never the authority.
+//   adminClient() — service_role, SERVER-ONLY, reserved for the few calls RLS
+//                   cannot express: SECURITY DEFINER RPCs that re-check
+//                   authority themselves (fix_client_pin,
+//                   approve_device_rebind_tx, evaluate_session_integrity).
+//                   Never used to "just read something" — that would silently
+//                   bypass the tree.
+//
+// If you find yourself reaching for adminClient() to render a page, the RLS
+// policy is missing and that is the bug to fix.
 
 const envSchema = z.object({
   NEXT_PUBLIC_SUPABASE_URL: z.url(),
@@ -51,7 +60,7 @@ export async function userClient() {
               store.set(name, value, options);
             }
           } catch {
-            // Called from a Server Component: middleware refreshes instead.
+            // Called from a Server Component; middleware handles the refresh.
           }
         },
       },
@@ -73,32 +82,41 @@ export interface ConsoleUser {
   employeeNo: string;
 }
 
-/** The signed-in console user, or null. Only active supervisors get in. */
+/**
+ * The signed-in console user, or null.
+ *
+ * Access is decided by has_console_access() in the DATABASE — a SECURITY
+ * DEFINER function the browser cannot influence — not by reading a role
+ * column here and trusting it.
+ */
 export async function currentConsoleUser(): Promise<ConsoleUser | null> {
   const supabase = await userClient();
-  const { data } = await supabase.auth.getUser();
-  if (data.user === null) return null;
+  const { data: userData } = await supabase.auth.getUser();
+  if (userData.user === null) return null;
 
-  // Read through the admin client: the console needs the agent row even
-  // though console users are not the subject of the mobile RLS policies.
-  const admin = adminClient();
-  const { data: agent } = await admin
+  const { data: allowed } = await supabase.rpc('my_console_access');
+  if (allowed !== true) return null;
+
+  // RLS agents_select_self covers this read; no service key required.
+  const { data: agent } = await supabase
     .from('agents')
-    .select('id, full_name, employee_no, role, employment_status')
-    .eq('auth_user_id', data.user.id)
+    .select('id, full_name, employee_no')
+    .eq('auth_user_id', userData.user.id)
     .maybeSingle();
+  if (agent === null) return null;
 
-  if (
-    agent === null ||
-    agent.role !== 'field_supervisor' ||
-    agent.employment_status !== 'active'
-  ) {
-    return null;
-  }
   return {
-    authUserId: data.user.id,
+    authUserId: userData.user.id,
     agentId: agent.id,
     fullName: agent.full_name,
     employeeNo: agent.employee_no,
   };
+}
+
+/** Page guard: returns the user or throws the redirect. */
+export async function requireConsoleUser(): Promise<ConsoleUser> {
+  const user = await currentConsoleUser();
+  // redirect() throws, so TypeScript narrows `user` for every caller.
+  if (user === null) redirect('/login');
+  return user;
 }

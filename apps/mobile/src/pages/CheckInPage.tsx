@@ -6,6 +6,7 @@ import {
   type VerifiedFix,
 } from '../services/location/index.ts';
 import { signalsFromFix, syncApi, type SavedPhoto } from '../services/sync/index.ts';
+import { rescheduleLocalNotifications } from '../services/notifications/index.ts';
 import { useAuth } from '../features/auth/AuthProvider';
 import { useAttendance } from '../features/attendance/AttendanceProvider.tsx';
 import { AttendanceCaptureFlow } from '../features/attendance/AttendanceCaptureFlow.tsx';
@@ -58,6 +59,8 @@ export default function CheckInPage() {
       await setOpenSessionLocal({ id: sessionId, agentId: agent.id });
       await startIntervalTracking(sessionId);
       await refresh();
+      // Swap the morning nudge for the check-out reminders.
+      void rescheduleLocalNotifications();
 
       if (await hasSeenBatteryNotice()) {
         navigate('/', { replace: true });

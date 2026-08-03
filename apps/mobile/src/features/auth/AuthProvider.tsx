@@ -23,6 +23,7 @@ import { isWithinOfflineGrace } from './offlineGrace';
 import { startSyncEngine } from '../../services/sync/index.ts';
 import { stopIntervalTracking } from '../../services/location/index.ts';
 import { syncClientsIfStale } from '../clients/sync.ts';
+import { initNotificationsAfterConsent } from '../../services/notifications/index.ts';
 import {
   fetchOwnAgent,
   hasCurrentConsent,
@@ -316,6 +317,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const acceptConsent = useCallback(async () => {
     if (state.agent === null || state.deviceId === null) return;
     await recordConsent(state.agent.id, state.deviceId);
+    // Ask for POST_NOTIFICATIONS HERE — right after the agent has read what
+    // the app collects and agreed to it, not at first launch. A denial is
+    // fine and changes nothing about attendance.
+    void initNotificationsAfterConsent(state.deviceId);
     await saveCachedProfile({
       agent: state.agent,
       deviceId: state.deviceId,

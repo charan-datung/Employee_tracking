@@ -7,6 +7,7 @@ import {
 } from '../services/location/index.ts';
 import { signalsFromFix, syncApi, type SavedPhoto } from '../services/sync/index.ts';
 import { clearLastPosition } from '../features/clients/lastPosition.ts';
+import { rescheduleLocalNotifications } from '../services/notifications/index.ts';
 import { useAuth } from '../features/auth/AuthProvider';
 import { useAttendance } from '../features/attendance/AttendanceProvider.tsx';
 import { AttendanceCaptureFlow } from '../features/attendance/AttendanceCaptureFlow.tsx';
@@ -47,6 +48,8 @@ export default function CheckOutPage() {
       });
 
       await refresh();
+      // Day is over: cancel the check-out reminders.
+      void rescheduleLocalNotifications();
       navigate('/', { replace: true });
     },
     [session, refresh, navigate],
