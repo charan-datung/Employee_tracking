@@ -1,0 +1,97 @@
+# Supabase CLI configuration.
+#
+# WHAT THIS FILE DOES AND DOES NOT DO
+#
+# It configures the LOCAL stack (`supabase start`) and tells the CLI which
+# remote project a `supabase link` belongs to. It does NOT configure your
+# hosted project — nothing here is pushed. Settings that must match on the
+# hosted side are called out below and repeated in /docs/SUPABASE.md, because
+# a local-only setting that silently differs in production is exactly the kind
+# of gap that ships an open signup endpoint.
+
+project_id = "datung-field"
+
+[api]
+enabled = true
+port = 54321
+# Only `public` is exposed over PostgREST. `storage`, `auth` and `cron` stay
+# unreachable from the anon key; anything the client needs from them goes
+# through a SECURITY DEFINER function in `public` that re-checks authority.
+schemas = ["public", "graphql_public"]
+# PostGIS types live in `extensions`. Without this, PostgREST cannot resolve
+# the geography columns' input/output functions and every row containing one
+# fails to serialise.
+extra_search_path = ["public", "extensions"]
+max_rows = 1000
+
+[db]
+port = 54322
+shadow_port = 54320
+# MUST match the hosted project (Dashboard → Settings → Database → version).
+# The shadow database used by `db diff` is built at this version, so a mismatch
+# produces diffs that are artefacts of the version gap rather than real drift.
+major_version = 17
+
+[db.migrations]
+enabled = true
+
+[db.seed]
+enabled = true
+# Local development data only. Never applied to a linked project by `db push`.
+sql_paths = ["seed.sql"]
+
+[studio]
+enabled = true
+port = 54323
+
+[storage]
+enabled = true
+# Selfies are ~200-400 KB at the capture resolution. 5 MiB is generous headroom
+# and still small enough that a malicious client cannot fill the bucket quickly.
+file_size_limit = "5MiB"
+
+# Declared so `supabase start` creates it locally. The HOSTED bucket is created
+# by bootstrap/01_storage.sql — this block does not reach the remote project.
+[storage.buckets.field-photos]
+public = false
+file_size_limit = "5MiB"
+allowed_mime_types = ["image/jpeg"]
+
+[auth]
+enabled = true
+site_url = "http://localhost:3000"
+additional_redirect_urls = []
+jwt_expiry = 3600
+enable_refresh_token_rotation = true
+# A device that syncs after a long offline stretch may present a refresh token
+# the server has already rotated. 10s is the default reuse window and it is
+# enough for a single retry, not enough to be a replay window worth attacking.
+refresh_token_reuse_interval = 10
+# NO SELF-SIGNUP, EVER. Accounts exist because an admin created them in
+# /admin/agents; an open signup endpoint would let anyone mint an authenticated
+# role and start probing RLS. SET THIS ON THE HOSTED PROJECT TOO —
+# Dashboard → Authentication → Sign In / Providers → disable "Allow new users
+# to sign up". config.toml does not do it for you.
+enable_signup = false
+enable_manual_linking = false
+
+[auth.email]
+enable_signup = false
+# Agents' addresses are synthetic (employee_no@datung.internal) and no mail is
+# ever deliverable to them. Confirmation is off because there is no inbox;
+# admin-created users are stamped email_confirm: true at creation instead.
+enable_confirmations = false
+double_confirm_changes = false
+
+[auth.sms]
+enable_signup = false
+enable_confirmations = false
+
+[edge_runtime]
+enabled = true
+# Restarts the worker on each request so a locally edited function is picked up
+# without a manual restart.
+policy = "oneshot"
+
+[analytics]
+enabled = false

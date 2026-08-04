@@ -116,6 +116,26 @@ native builds use real SQLite and never load it). GPS `simulated` detection
 and the foreground service only exist on a real device; browser dev is for
 UI and sync-logic work.
 
+## Backend (Supabase)
+
+The schema, policies and edge functions are all in `/supabase` and already
+wired into both apps. Connecting them to a real project is one command plus
+three one-time scripts:
+
+```sh
+supabase link --project-ref <ref>
+npm run db:push                # applies all migrations — creates every table
+                               # then run supabase/bootstrap/01..03 once
+npm run functions:deploy
+```
+
+**[/docs/SUPABASE.md](./docs/SUPABASE.md)** explains what you are connecting
+and why. **[/docs/DEPLOY.md](./docs/DEPLOY.md)** is the go-live checklist.
+
+For local work, `npm run db:start` brings up the whole stack in Docker;
+`npm run db:reset` re-applies every migration from scratch and `npm run
+db:test` runs the pgTAP suites.
+
 ## Other commands
 
 ```sh

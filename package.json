@@ -10,7 +10,14 @@
     "build": "npm run build --workspaces --if-present",
     "build:mobile": "npm run build --workspace apps/mobile",
     "build:console": "npm run build --workspace apps/console",
-    "typecheck": "npm run typecheck --workspaces --if-present"
+    "typecheck": "npm run typecheck --workspaces --if-present",
+    "db:start": "supabase start",
+    "db:stop": "supabase stop",
+    "db:push": "supabase db push",
+    "db:reset": "supabase db reset",
+    "db:test": "supabase test db",
+    "db:diff": "supabase db diff",
+    "functions:deploy": "supabase functions deploy register_device && supabase functions deploy approve_device_rebind && supabase functions deploy evaluate_session_integrity && supabase functions deploy dispatch_notifications"
   },
   "engines": {
     "node": ">=20.19"
