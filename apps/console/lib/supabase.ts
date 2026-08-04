@@ -80,6 +80,8 @@ export interface ConsoleUser {
   agentId: string;
   fullName: string;
   employeeNo: string;
+  /** Admins can provision accounts and edit the roster; supervisors cannot. */
+  isAdmin: boolean;
 }
 
 /**
@@ -105,12 +107,26 @@ export async function currentConsoleUser(): Promise<ConsoleUser | null> {
     .maybeSingle();
   if (agent === null) return null;
 
+  // Admin status also comes from the database, never from a client-supplied
+  // claim — am_i_admin() is SECURITY DEFINER and takes no argument, so nobody
+  // can ask it about somebody else.
+  const { data: admin } = await supabase.rpc('am_i_admin');
+
   return {
     authUserId: userData.user.id,
     agentId: agent.id,
     fullName: agent.full_name,
     employeeNo: agent.employee_no,
+    isAdmin: admin === true,
   };
+}
+
+/** Admin-only page guard. Supervisors reaching an /admin URL are bounced. */
+export async function requireAdmin(): Promise<ConsoleUser> {
+  const user = await currentConsoleUser();
+  if (user === null) redirect('/login');
+  if (!user.isAdmin) redirect('/');
+  return user;
 }
 
 /** Page guard: returns the user or throws the redirect. */

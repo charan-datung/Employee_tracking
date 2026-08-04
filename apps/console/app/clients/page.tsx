@@ -8,7 +8,7 @@ export const dynamic = 'force-dynamic';
 // Clients: table + map + CSV import. RLS (clients_select_reports) scopes this
 // to clients assigned to the supervisor's reporting tree.
 export default async function ClientsPage() {
-  await requireConsoleUser();
+  const user = await requireConsoleUser();
   const supabase = await userClient();
 
   const { data } = await supabase
@@ -54,6 +54,21 @@ export default async function ClientsPage() {
     pinTask: taskByClient.get(String(c['id'])) ?? null,
   }));
 
+  // Reassignment is admin-only, so the agent list is only fetched for them.
+  const { data: agentData } = user.isAdmin
+    ? await supabase
+        .from('agents')
+        .select('id, full_name, employee_no')
+        .eq('employment_status', 'active')
+        .order('full_name')
+    : { data: [] };
+  const assignableAgents = ((agentData ?? []) as unknown as Record<string, unknown>[]).map(
+    (a) => ({
+      id: String(a['id']),
+      name: `${String(a['full_name'])} (${String(a['employee_no'])})`,
+    }),
+  );
+
   return (
     <main className="mx-auto max-w-7xl px-6 py-8">
       <header className="flex flex-wrap items-end justify-between gap-4">
@@ -70,7 +85,12 @@ export default async function ClientsPage() {
         </Link>
       </header>
       <div className="mt-6">
-        <ClientsView rows={rows} geocoderAvailable={nominatimGeocoder.available} />
+        <ClientsView
+          rows={rows}
+          geocoderAvailable={nominatimGeocoder.available}
+          isAdmin={user.isAdmin}
+          assignableAgents={assignableAgents}
+        />
       </div>
     </main>
   );

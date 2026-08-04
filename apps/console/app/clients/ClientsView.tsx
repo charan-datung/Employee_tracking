@@ -6,6 +6,7 @@ import { useRouter } from 'next/navigation';
 import type { Map as MapLibreMap } from 'maplibre-gl';
 import { BASEMAP_STYLE } from '../../lib/tiles';
 import { importClientsAction, type ImportReport } from './actions';
+import { assignClientsAction } from '../admin/actions';
 
 export interface ClientRow {
   id: string;
@@ -59,12 +60,20 @@ const TEMPLATE_HEADERS = [
 export function ClientsView({
   rows,
   geocoderAvailable,
+  isAdmin,
+  assignableAgents,
 }: {
   rows: ClientRow[];
   geocoderAvailable: boolean;
+  isAdmin: boolean;
+  assignableAgents: { id: string; name: string }[];
 }) {
   const router = useRouter();
   const [query, setQuery] = useState('');
+  const [selected, setSelected] = useState<Set<string>>(new Set());
+  const [assignTo, setAssignTo] = useState('');
+  const [assigning, setAssigning] = useState(false);
+  const [assignMessage, setAssignMessage] = useState<string | null>(null);
   const [importing, setImporting] = useState(false);
   const [report, setReport] = useState<ImportReport | null>(null);
   const containerRef = useRef<HTMLDivElement | null>(null);
@@ -132,6 +141,23 @@ export function ClientsView({
       mapRef.current = null;
     };
   }, [rows]);
+
+  const reassign = async () => {
+    setAssigning(true);
+    setAssignMessage(null);
+    const result = await assignClientsAction({
+      clientIds: [...selected],
+      // Empty string means "unassign" — a client with no agent is visible to
+      // nobody in the field, which is sometimes exactly what you want.
+      agentId: assignTo.length > 0 ? assignTo : null,
+    });
+    setAssignMessage(result.message ?? null);
+    if (result.status === 'ok') {
+      setSelected(new Set());
+      router.refresh();
+    }
+    setAssigning(false);
+  };
 
   const onFile = async (file: File) => {
     setImporting(true);
@@ -226,6 +252,42 @@ export function ClientsView({
 
       <div ref={containerRef} className="h-[360px] w-full rounded-2xl border border-gray-200" />
 
+      {isAdmin && selected.size > 0 && (
+        <div className="sticky top-0 z-10 flex flex-wrap items-center gap-2 rounded-2xl border-2 border-emerald-500 bg-white p-4 shadow-lg">
+          <span className="text-sm font-semibold text-gray-900">
+            {selected.size} client napili
+          </span>
+          <select
+            value={assignTo}
+            onChange={(e) => setAssignTo(e.target.value)}
+            className="h-10 rounded-xl border border-gray-300 px-3 text-sm"
+          >
+            <option value="">— alisin ang assignment —</option>
+            {assignableAgents.map((a) => (
+              <option key={a.id} value={a.id}>{a.name}</option>
+            ))}
+          </select>
+          <button
+            type="button"
+            onClick={() => void reassign()}
+            disabled={assigning}
+            className="h-10 rounded-xl bg-emerald-600 px-5 text-sm font-semibold text-white disabled:bg-gray-300"
+          >
+            {assigning ? 'Ina-assign…' : 'I-assign'}
+          </button>
+          <button
+            type="button"
+            onClick={() => setSelected(new Set())}
+            className="h-10 rounded-xl border border-gray-300 px-4 text-sm font-medium"
+          >
+            Alisin ang pagpili
+          </button>
+          {assignMessage !== null && (
+            <span className="text-sm text-gray-600">{assignMessage}</span>
+          )}
+        </div>
+      )}
+
       <input
         type="search"
         value={query}
@@ -238,6 +300,7 @@ export function ClientsView({
         <table className="w-full text-sm">
           <thead className="border-b border-gray-200 bg-gray-50 text-left text-xs uppercase tracking-wide text-gray-500">
             <tr>
+              {isAdmin && <th className="px-4 py-3 w-10" />}
               <th className="px-4 py-3">Client</th>
               <th className="px-4 py-3">Ref</th>
               <th className="px-4 py-3">Lugar</th>
@@ -248,6 +311,23 @@ export function ClientsView({
           <tbody className="divide-y divide-gray-100">
             {filtered.map((c) => (
               <tr key={c.id} className={c.pinTask !== null ? 'bg-red-50' : undefined}>
+                {isAdmin && (
+                  <td className="px-4 py-3">
+                    <input
+                      type="checkbox"
+                      checked={selected.has(c.id)}
+                      onChange={() =>
+                        setSelected((prev) => {
+                          const next = new Set(prev);
+                          if (next.has(c.id)) next.delete(c.id);
+                          else next.add(c.id);
+                          return next;
+                        })
+                      }
+                      className="h-4 w-4"
+                    />
+                  </td>
+                )}
                 <td className="px-4 py-3 font-medium text-gray-900">{c.displayName}</td>
                 <td className="px-4 py-3 font-mono text-xs text-gray-500">
                   {c.externalRef ?? '—'}

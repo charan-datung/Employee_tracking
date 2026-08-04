@@ -10,12 +10,14 @@ export const metadata: Metadata = {
 };
 
 const NAV = [
-  { href: '/', label: 'Board' },
-  { href: '/flags', label: 'Flags' },
-  { href: '/devices', label: 'Devices' },
-  { href: '/clients', label: 'Clients' },
-  { href: '/pins', label: 'Pin review' },
-  { href: '/reports', label: 'Reports' },
+  { href: '/', label: 'Board', adminOnly: false },
+  { href: '/flags', label: 'Flags', adminOnly: false },
+  { href: '/devices', label: 'Devices', adminOnly: false },
+  { href: '/clients', label: 'Clients', adminOnly: false },
+  { href: '/pins', label: 'Pin review', adminOnly: false },
+  { href: '/reports', label: 'Reports', adminOnly: false },
+  { href: '/admin/agents', label: 'Agents', adminOnly: true },
+  { href: '/admin/branches', label: 'Branches', adminOnly: true },
 ] as const;
 
 // Route component — default export permitted per /CLAUDE.md CODE STYLE.
@@ -31,7 +33,7 @@ export default async function RootLayout({ children }: { children: ReactNode }) 
               <span className="mr-4 py-4 text-sm font-bold text-emerald-700">
                 Datung Field
               </span>
-              {NAV.map((item) => (
+              {NAV.filter((item) => !item.adminOnly || user.isAdmin).map((item) => (
                 <Link
                   key={item.href}
                   href={item.href}
@@ -42,6 +44,11 @@ export default async function RootLayout({ children }: { children: ReactNode }) 
               ))}
               <span className="ml-auto text-sm text-gray-500">
                 {user.fullName} · {user.employeeNo}
+                {user.isAdmin && (
+                  <span className="ml-2 rounded bg-gray-900 px-1.5 py-0.5 text-xs font-semibold text-white">
+                    admin
+                  </span>
+                )}
               </span>
             </div>
           </nav>
